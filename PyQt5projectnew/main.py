@@ -85,8 +85,8 @@ class Canvas(QWidget):
         if event.buttons() == Qt.RightButton:
             painter = QPainter(self.currentImage)
             painter.drawImage(QPoint(0, 0), self.copy)
-            painter.setBrush(QBrush(self.fillcolor))
-            painter.setPen(QPen(self.brushcolor, self.brushsize, Qt.SolidLine, Qt.RoundCap, Qt.RoundJoin))
+            painter.setBrush(QBrush(QColor(0, 0, 0, 0)))
+            painter.setPen(QPen(QColor(0, 0, 0), 1, Qt.DashDotLine, Qt.RoundCap, Qt.RoundJoin))
             painter.drawRect(self.lastPoint.x(), self.lastPoint.y(), event.x() - self.lastPoint.x(),
                              event.y() - self.lastPoint.y())
             self.update()
@@ -168,7 +168,7 @@ class MainWindow(QMainWindow):
     def setupUi(self):
         self.setWindowTitle('PyQt5 Paint')
         self.setWindowIcon(QIcon('icons/Main.png'))
-        self.setGeometry(100, 100, self.canvas.x + 100, self.canvas.y + 120)
+        self.setGeometry(0, 0, self.canvas.x + 100, self.canvas.y + 120)
         self.setStyleSheet(
             """
                     QPushButton
@@ -362,9 +362,9 @@ class MainWindow(QMainWindow):
         self.canvas.instrument = 'Eraser'
 
     def closeEvent(self, event):
-        text = '''Are you sure you want to Quit?\nAny unsaved work will be lost.'''
+        message = '''Вы точно хотите выйти?\nНесохраненные данные будут потеряны.'''
         reply = QMessageBox.question(
-            self, 'Warning!', text,
+            self, 'Предупреждение!', message,
             QMessageBox.Save | QMessageBox.Cancel | QMessageBox.Close)
 
         if reply == QMessageBox.Close:

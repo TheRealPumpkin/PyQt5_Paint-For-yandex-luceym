@@ -8,18 +8,41 @@ from PyQt5.QtCore import *
 class Canvas(QWidget):
     def __init__(self):
         super().__init__()
+
         self.brushcolor = Qt.black
         self.fillcolor = QColor(0, 0, 0, 0)
         self.brushsize = 1
         self.instrument = 'Brush'
+
         self.undo = []
         self.redo = []
-        self.x = 512
-        self.y = 512
+
+        self.x = 1024
+        self.y = 720
         self.resize(self.x, self.y)
-        self.setAttribute(Qt.WA_StaticContents)
         self.currentImage = QImage(self.size(), QImage.Format_RGB32)
         self.currentImage.fill(QColor(255, 255, 255))
+
+    def clearUnRedo(self):
+        self.undo.clear()
+        Window.undo_button.setEnabled(False)
+        self.redo.clear()
+        Window.redo_button.setEnabled(False)
+
+    def new(self):
+        self.clearUnRedo()
+        self.resize(self.x, self.y)
+        self.currentImage = QImage(self.size(), QImage.Format_RGB32)
+        self.currentImage.fill(QColor(255, 255, 255))
+        self.update()
+
+    def open(self, fname):
+        loadImage = QImage(fname)
+        self.clearUnRedo()
+        if loadImage.width() > self.x or loadImage.height() > self.y:
+            self.currentImage = loadImage.scaled(1024, 720, Qt.KeepAspectRatio)
+        else:
+            self.currentImage = loadImage
 
     def copy_for_draw(self):
         self.copy = QImage(self.currentImage.size(), QImage.Format_RGB32)
@@ -159,16 +182,13 @@ class Canvas(QWidget):
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
-        # Create Canvas
-        self.canvas = Canvas()
-        self.setCentralWidget(self.canvas)
-
         self.setupUi()
 
     def setupUi(self):
         self.setWindowTitle('PyQt5 Paint')
         self.setWindowIcon(QIcon('icons/Main.png'))
-        self.setGeometry(0, 0, self.canvas.x + 100, self.canvas.y + 120)
+        self.setGeometry(0, 0, 1024 + 100, 720 + 120)
+        self.setMinimumSize(1024 + 100, 720 + 120)
         self.setStyleSheet(
             """
                     QPushButton
@@ -194,6 +214,9 @@ class MainWindow(QMainWindow):
                      border-style: outset;
                      font : 14px;}
                     """)
+# Create Canvas
+        self.canvas = Canvas()
+        self.setCentralWidget(self.canvas)
 
 # Create menubar and toolbars
         menubar = self.menuBar()
@@ -214,6 +237,7 @@ class MainWindow(QMainWindow):
 # Create actions and widgets
         self.actionSave = QAction(QIcon('icons/save.png'), 'Save')
         self.actionExit = QAction(QIcon('icons/exit.png'), 'Exit')
+        self.actionNew = QAction('New')
         self.actionBrush = QAction(QIcon('icons/brush_32.png'), 'Brush')
         self.actionLine = QAction(QIcon('icons/Line.png'), 'Line')
         self.actionCircle = QAction(QIcon('icons/Ellipse.png'), 'Ellipse')
@@ -230,6 +254,7 @@ class MainWindow(QMainWindow):
         self.actionEraser.triggered.connect(self.chooseEraser)
         self.actionOpen.triggered.connect(self.OpenImage)
         self.actionClear.triggered.connect(self.clear)
+        self.actionNew.triggered.connect(self.canvas.new)
 
         self.button_1 = QPushButton(self)
         self.button_1.setText("COlOR_1")
@@ -263,7 +288,6 @@ class MainWindow(QMainWindow):
         self.SpinBoxBrushsize.setMaximum(50)
         self.SpinBoxBrushsize.valueChanged.connect(self.BrushSizeUpdate)
 
-
 # Add actions and widgets to menubar and toolbars
         self.filemenu.addAction(self.actionSave)
         self.filemenu.addAction(self.actionExit)
@@ -271,6 +295,7 @@ class MainWindow(QMainWindow):
         self.toolsmenu.addAction(self.actionBrush)
         self.toolsmenu.addAction(self.actionEraser)
         self.toolsmenu.addAction(self.actionClear)
+        self.toolsmenu.addAction(self.actionNew)
         self.shapesmenu.addAction(self.actionLine)
         self.shapesmenu.addAction(self.actionCircle)
         self.shapesmenu.addAction(self.actionRect)
@@ -363,30 +388,25 @@ class MainWindow(QMainWindow):
 
     def closeEvent(self, event):
         message = '''Вы точно хотите выйти?\nНесохраненные данные будут потеряны.'''
-        reply = QMessageBox.question(
+        ans = QMessageBox.question(
             self, 'Предупреждение!', message,
-            QMessageBox.Save | QMessageBox.Cancel | QMessageBox.Close)
-
-        if reply == QMessageBox.Close:
+            QMessageBox.Save | QMessageBox.Close)
+        if ans == QMessageBox.Close:
             QApplication.quit()
-
-        elif reply == QMessageBox.Save:
+        elif ans == QMessageBox.Save:
             self.saveFile()
-
-        elif reply == QMessageBox.Cancel:
-            pass
 
     def OpenImage(self):
         fname = QFileDialog.getOpenFileName(
             self, 'Выбрать картинку', '',
-            'Картинка (*.jpg);;Картинка (*.png);;Все файлы (*)')[0]
+            'Картинка (*.jpg);;Картинка (*.png)')[0]
         if fname != "":
-            self.canvas.currentImage = QImage(fname)
+            self.canvas.open(fname)
 
     def saveFile(self):
         fname = QFileDialog.getSaveFileName(
             self, 'Выбрать картинку', '',
-            'Картинка (*.jpg);;Картинка (*.png);;Все файлы (*)')[0]
+            'Картинка (*.jpg);;Картинка (*.png)')[0]
         if fname != "":
             self.canvas.currentImage.save(fname)
 

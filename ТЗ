@@ -1,4 +1,4 @@
-ТЗ:
-create a primitive graphic editor using PyQt5 ( probably PILL, random, etc)
-which can save and open files in different formats
-different types of brushes and shapes will be available
+Цель:
+Создать примитивный графический редактор используя библиотеку PyQt5
+С возможностью использования кистей, фигур, инструментов различных цветов и размеров.
+Приложение сможет сохрагять, открывать, файлы разных форматов (png, jpg)
